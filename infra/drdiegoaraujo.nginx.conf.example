@@ -1,0 +1,17 @@
+# Exemplo para o Nginx instalado no HOST.
+# Confirme que este dominio ainda nao possui outro bloco server ativo.
+# O container publica somente no loopback; o proxy precisa rodar no host.
+# Se NOERION_PORT mudar, ajuste tambem o proxy_pass abaixo.
+server {
+    listen 80;
+    server_name drdiegoaraujo.com www.drdiegoaraujo.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:8088;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.openai/
+qa/
+tmp/
+noerion-site/
+NOERION_V6/
+NOERION_V6_SIGNATURE_EDITION_COMPLETO.zip
+*.log
+.DS_Store
+Thumbs.db
