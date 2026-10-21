@@ -63,6 +63,12 @@ fi
 
 docker compose -f compose.yaml config --quiet
 
+if ! docker network inspect proxy >/dev/null 2>&1; then
+    printf 'ERRO: a rede externa proxy do Traefik nao foi encontrada neste servidor.\n' >&2
+    printf 'Use a rede do proxy existente; nao crie outra rede isolada com o mesmo objetivo.\n' >&2
+    exit 1
+fi
+
 printf 'Construindo e iniciando somente o projeto drdiegoaraujo...\n'
 if docker compose up --help | grep -q -- '--wait'; then
     docker compose -f compose.yaml up -d --build --wait
@@ -71,16 +77,34 @@ else
 fi
 
 site_url="http://127.0.0.1:${NOERION_PORT}/"
+local_ready=0
 for attempt in {1..30}; do
     if curl --fail --silent --show-error --max-time 5 "$site_url" >/dev/null 2>&1; then
-        printf 'Implantacao concluida. Landing page disponivel em %s\n' "$site_url"
-        printf 'O dominio publico depende do proxy reverso e do certificado descritos em DEPLOY.md.\n'
+        local_ready=1
+        printf 'Container saudavel em %s\n' "$site_url"
+        break
+    fi
+    sleep 2
+done
+
+if [[ "$local_ready" -ne 1 ]]; then
+    printf 'ERRO: a landing page nao respondeu em %s.\n' "$site_url" >&2
+    docker compose -f compose.yaml ps
+    docker compose -f compose.yaml logs --tail=50 noerion
+    exit 1
+fi
+
+public_url='https://drdiegoaraujo.com/'
+printf 'Verificando a rota publica no Traefik...\n'
+for attempt in {1..12}; do
+    if curl --fail --silent --max-time 10 "$public_url" \
+        | grep -F '<title>Dr. Diego de Araújo — NOÉRION Signature System</title>' >/dev/null; then
+        printf 'Implantacao concluida: %s\n' "$public_url"
         exit 0
     fi
     sleep 2
 done
 
-printf 'ERRO: a landing page nao respondeu em %s.\n' "$site_url" >&2
-docker compose -f compose.yaml ps
-docker compose -f compose.yaml logs --tail=50 noerion
+printf 'ERRO: o container esta saudavel, mas a landing page ainda nao foi confirmada em %s.\n' "$public_url" >&2
+printf 'Confira o DNS de origem no Cloudflare e a rota drdiegoaraujo no Traefik (rede proxy, entrada websecure, resolver le).\n' >&2
 exit 1

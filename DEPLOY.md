@@ -1,79 +1,72 @@
-# Implantacao em drdiegoaraujo.com
+# Implantação em drdiegoaraujo.com
 
-O destino informado e `/srv/stack/drdiegoaraujo`. A landing page esta em `dist/` e e servida por um container Nginx independente. O Compose publica `127.0.0.1:8088`, acessivel apenas no servidor. Os comandos deste projeto nao alteram os containers do Hermerium.
+O servidor usa **Traefik** nas portas 80/443. A landing page é servida pelo Nginx do seu próprio container, conectado à rede externa do Traefik.
 
-## 1. Preparar o repositorio
+Configuração confirmada no servidor:
 
-Requisitos no servidor: Git, Docker com Compose v2 e curl. Execute com um usuario que tenha acesso ao Docker. Se o diretorio informado ja existe e esta vazio:
+- Diretório: `/srv/stack/drdiegoaraujo`.
+- Rede externa: `proxy`.
+- Entrada HTTPS: `websecure`.
+- Resolver de certificados: `le`.
+- Serviço da landing page: `noerion`, porta interna `80`.
+- Verificação local: `http://127.0.0.1:8088/`.
+- Domínio publicado: `https://drdiegoaraujo.com/`.
+
+## Atualizar e corrigir o domínio
+
+No clone existente, execute:
 
 ```bash
 cd /srv/stack/drdiegoaraujo
-git clone https://github.com/pablorezendes/drdiegoaraujo.git .
-git switch main
+git pull --ff-only origin main
 bash deploy.sh
 ```
 
-Se o diretorio ainda nao existir, crie-o antes com `mkdir -p /srv/stack/drdiegoaraujo`. Se ja contiver arquivos, revise-os antes de clonar. Nao remova arquivos existentes automaticamente. Se ja for um clone deste repositorio na branch `main`, basta executar `bash deploy.sh` nele.
+O Compose conecta o serviço à rede `proxy` e registra a rota HTTPS `drdiegoaraujo` por meio das labels do Traefik. Não é necessário instalar Nginx no host, executar Certbot ou reiniciar o Traefik. Os serviços das outras stacks não são recriados.
 
-O script exige a arvore Git limpa, atualiza `origin/main` com `git pull --ff-only`, constroi a imagem, inicia o servico `noerion` e verifica a resposta HTTP local. Nao e necessario Node.js no servidor. Um erro interrompe a implantacao e deve ser revisado antes de uma nova tentativa.
+O script exige a árvore Git limpa, atualiza `origin/main`, valida a rede externa, constrói a imagem e inicia este projeto. Depois verifica o container local e confirma o título da landing page pelo domínio público. Se a página pública não responder, ele informa que a validação externa falhou, mesmo se o container estiver saudável.
 
-Validacao manual:
+## Primeira instalação
+
+Requisitos: Git, curl, Docker com Compose v2 e acesso ao Docker. O Traefik deve estar ativo na rede `proxy`, com a entrada `websecure` e o resolver `le` configurados.
+
+Em um diretório vazio:
 
 ```bash
-curl -I http://127.0.0.1:8088/
+mkdir -p /srv/stack/drdiegoaraujo
+cd /srv/stack/drdiegoaraujo
+git clone https://github.com/pablorezendes/drdiegoaraujo.git .
+bash deploy.sh
+```
+
+Não remova arquivos de um diretório já preenchido para conseguir clonar; use o clone existente ou revise seu conteúdo.
+
+## DNS e Cloudflare
+
+O registro de origem de `drdiegoaraujo.com` deve apontar para este servidor. O Traefik solicita o certificado por meio do resolver `le` que já existe na stack. Se o domínio estiver no Cloudflare, use o modo SSL/TLS compatível com o HTTPS da origem; com certificado válido na origem, o modo recomendado é **Full (strict)**.
+
+Esta configuração publica somente o domínio informado, `drdiegoaraujo.com`. O alias `www` precisa de DNS e de uma regra de roteamento próprios se for adicionado depois. O Compose não altera DNS, configurações do Cloudflare, certificados de outros domínios ou o proxy global.
+
+## Diagnóstico
+
+```bash
+cd /srv/stack/drdiegoaraujo
 docker compose -f compose.yaml ps
+curl -I http://127.0.0.1:8088/
+curl -I https://drdiegoaraujo.com/
 docker compose -f compose.yaml logs --tail=50 noerion
 ```
 
-Se a porta 8088 ja estiver em uso, escolha uma porta livre e use a mesma em todas as atualizacoes:
+- Local `200` e domínio `404`: confira a versão do Compose e as labels/rede da rota no Traefik.
+- Domínio `502` ou `504`: confira a conexão do serviço e do Traefik à rede `proxy`, a saúde do container e a porta interna `80`.
+- Erro de certificado: confira o resolver `le`, a origem DNS e o modo SSL/TLS do Cloudflare.
+
+As labels podem ser conferidas sem exibir variáveis de ambiente:
 
 ```bash
-export NOERION_PORT=8089
-bash deploy.sh
+docker inspect drdiegoaraujo-noerion-1 --format 'rede={{index .Config.Labels "traefik.docker.network"}} entrada={{index .Config.Labels "traefik.http.routers.drdiegoaraujo.entrypoints"}} resolver={{index .Config.Labels "traefik.http.routers.drdiegoaraujo.tls.certresolver"}}'
 ```
 
-Ao trocar a porta, ajuste tambem `proxy_pass` no proxy reverso. O script usa `NOERION_PORT` exportada no shell e assume 8088 se ela estiver ausente; nao depende de uma porta definida apenas em `.env`.
+A porta local pode ser alterada exportando `NOERION_PORT` antes do script. Isso não altera a porta interna `80` usada pelo Traefik.
 
-## 2. Apontar o dominio e configurar o proxy
-
-No provedor DNS, aponte `drdiegoaraujo.com` para o IP publico deste servidor. Configure `www.drdiegoaraujo.com` somente se esse endereco tambem for usado. Verifique registros AAAA antigos: eles precisam apontar para o mesmo servidor com IPv6 funcional ou ser corrigidos no provedor.
-
-O arquivo `infra/drdiegoaraujo.nginx.conf.example` e um exemplo HTTP para um **Nginx instalado no host**. Antes de aplica-lo, confira como a stack existente recebe trafego nas portas 80 e 443 e se ja existe configuracao para este dominio. Se o proxy existente estiver em um container, o loopback dele nao e o loopback do host: adapte a integracao ao proxy atual antes de usar o exemplo. Nao inicie outro proxy nas mesmas portas.
-
-Para um host que ja usa o layout `/etc/nginx/sites-available` e `/etc/nginx/sites-enabled`, e sem outro bloco ativo para este dominio, revise o exemplo e entao instale-o:
-
-```bash
-sudo cp infra/drdiegoaraujo.nginx.conf.example /etc/nginx/sites-available/drdiegoaraujo.conf
-sudo ln -s /etc/nginx/sites-available/drdiegoaraujo.conf /etc/nginx/sites-enabled/drdiegoaraujo.conf
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
-Se esses caminhos, o arquivo ou o link ja existirem, revise a configuracao existente e faca backup antes de editar; nao sobrescreva uma configuracao em uso. Em outros layouts, use o diretorio de inclusao do Nginx existente. Recarregue somente depois que `nginx -t` passar. O `deploy.sh` nao faz essas alteracoes.
-
-Teste o roteamento HTTP, inclusive de uma conexao externa:
-
-```bash
-curl -I http://drdiegoaraujo.com/
-```
-
-## 3. Ativar HTTPS
-
-Esta etapa depende do DNS propagado, do dominio respondendo por HTTP no servidor certo e do acesso publico as portas 80 e 443. Use o mecanismo de certificados do proxy existente. Para Nginx no host com Certbot e seu plugin Nginx ja instalados:
-
-```bash
-sudo certbot --nginx -d drdiegoaraujo.com -d www.drdiegoaraujo.com
-sudo certbot renew --dry-run
-curl -I https://drdiegoaraujo.com/
-```
-
-Inclua `www` no comando somente se o DNS dele tambem estiver configurado para este servidor. Ative o redirecionamento para HTTPS durante ou depois da emissao bem-sucedida do certificado. O exemplo inicia apenas em HTTP para permitir essa emissao. Se o provedor usa outro proxy ou gerenciador de certificados, mantenha o fluxo existente.
-
-## Atualizacoes futuras
-
-```bash
-cd /srv/stack/drdiegoaraujo
-bash deploy.sh
-```
-
-Exporte novamente `NOERION_PORT` antes do comando se usar uma porta diferente de 8088. Nao execute `docker compose down` em outra stack, nao use comandos de limpeza global do Docker e nao substitua configuracoes de proxy de outros dominios. A implantacao nao modifica firewall, DNS, certificados ou arquivos do Nginx no host.
+Referência: [configuração de roteamento Docker do Traefik](https://doc.traefik.io/traefik/reference/routing-configuration/other-providers/docker/).

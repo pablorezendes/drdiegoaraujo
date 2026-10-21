@@ -8,9 +8,25 @@ services:
     ports:
       - "127.0.0.1:${NOERION_PORT:-8088}:80"
     restart: unless-stopped
+    networks:
+      - proxy
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "proxy"
+      traefik.http.routers.drdiegoaraujo.rule: "Host(`drdiegoaraujo.com`)"
+      traefik.http.routers.drdiegoaraujo.entrypoints: "websecure"
+      traefik.http.routers.drdiegoaraujo.tls: "true"
+      traefik.http.routers.drdiegoaraujo.tls.certresolver: "le"
+      traefik.http.routers.drdiegoaraujo.service: "drdiegoaraujo"
+      traefik.http.services.drdiegoaraujo.loadbalancer.server.port: "80"
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
       interval: 5s
       timeout: 3s
       retries: 12
       start_period: 5s
+
+networks:
+  proxy:
+    external: true
+    name: proxy

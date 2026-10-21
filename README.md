@@ -8,7 +8,7 @@ HTML, CSS e JavaScript puro, sem dependências de instalação ou etapa de build
 
 Diretório previsto: `/srv/stack/drdiegoaraujo`.
 
-Consulte [DEPLOY.md](DEPLOY.md) para clonar o repositório, iniciar o container e conectar o domínio ao proxy e ao HTTPS. A aplicação usa uma porta local própria para coexistir com os outros projetos do servidor.
+Consulte [DEPLOY.md](DEPLOY.md) para clonar o repositório, iniciar o container e conectar o domínio ao proxy e ao HTTPS. A aplicação se conecta ao Traefik existente pela rede `proxy`, com entrada `websecure` e resolver `le`. A porta local `8088` permite verificar o container separadamente.
 
 ## Rodar localmente
 
