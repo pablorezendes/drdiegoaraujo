@@ -1,20 +1,10 @@
-# Implantação em drdiegoaraujo.com
+# Implantar somente a manutenção
 
-O servidor usa **Traefik** nas portas 80/443. A landing page é servida pelo Nginx do seu próprio container, conectado à rede externa do Traefik.
+O usuário autorizou apenas “Site em manutenção / Voltamos em breve”. A landing completa está preservada em `dist/` e deve permanecer fora do ar até nova autorização humana explícita. Docker e `server.mjs` servem `maintenance/`; nenhum arquivo de `dist/` entra no diretório público do container.
 
-Configuração confirmada no servidor:
+## Atualizar o servidor
 
-- Diretório: `/srv/stack/drdiegoaraujo`.
-- Rede externa: `proxy`.
-- Entrada HTTPS: `websecure`.
-- Resolver de certificados: `le`.
-- Serviço da landing page: `noerion`, porta interna `80`.
-- Verificação local: `http://127.0.0.1:8088/`.
-- Domínio publicado: `https://drdiegoaraujo.com/`.
-
-## Atualizar e corrigir o domínio
-
-No clone existente, execute:
+No clone existente:
 
 ```bash
 cd /srv/stack/drdiegoaraujo
@@ -22,15 +12,13 @@ git pull --ff-only origin main
 bash deploy.sh
 ```
 
-O Compose conecta o serviço à rede `proxy` e registra a rota HTTPS `drdiegoaraujo` por meio das labels do Traefik. Não é necessário instalar Nginx no host, executar Certbot ou reiniciar o Traefik. Os serviços das outras stacks não são recriados.
+O script exige a árvore Git limpa, atualiza `origin/main`, valida `maintenance/index.html` e seu título, constrói a imagem e inicia somente este projeto. Depois confirma a página de manutenção e HTTP 200 tanto em `http://127.0.0.1:8088/` quanto em `https://drdiegoaraujo.com/`. Um container saudável sem a manutenção no domínio público é tratado como falha da implantação.
 
-O script exige a árvore Git limpa, atualiza `origin/main`, valida a rede externa, constrói a imagem e inicia este projeto. Depois verifica o container local e confirma o título da landing page pelo domínio público. Se a página pública não responder, ele informa que a validação externa falhou, mesmo se o container estiver saudável.
+O servidor usa o Traefik existente, pela rede externa `proxy`, entrada `websecure` e resolver `le`. O Compose não reinicia o Traefik nem modifica outras stacks, DNS ou certificados. Não instale outro proxy nas portas 80/443. Se a porta local 8088 estiver ocupada, exporte `NOERION_PORT` com uma porta livre antes de cada execução do script.
 
 ## Primeira instalação
 
-Requisitos: Git, curl, Docker com Compose v2 e acesso ao Docker. O Traefik deve estar ativo na rede `proxy`, com a entrada `websecure` e o resolver `le` configurados.
-
-Em um diretório vazio:
+Requisitos: Git, curl, Docker com Compose v2 e Traefik já ativo com a configuração acima. Em um diretório vazio:
 
 ```bash
 mkdir -p /srv/stack/drdiegoaraujo
@@ -39,34 +27,17 @@ git clone https://github.com/pablorezendes/drdiegoaraujo.git .
 bash deploy.sh
 ```
 
-Não remova arquivos de um diretório já preenchido para conseguir clonar; use o clone existente ou revise seu conteúdo.
+Use o clone existente se o diretório já contiver o repositório. Não remova arquivos para conseguir clonar. O domínio deve apontar para o servidor; o alias `www` não está configurado neste Compose.
 
-## DNS e Cloudflare
-
-O registro de origem de `drdiegoaraujo.com` deve apontar para este servidor. O Traefik solicita o certificado por meio do resolver `le` que já existe na stack. Se o domínio estiver no Cloudflare, use o modo SSL/TLS compatível com o HTTPS da origem; com certificado válido na origem, o modo recomendado é **Full (strict)**.
-
-Esta configuração publica somente o domínio informado, `drdiegoaraujo.com`. O alias `www` precisa de DNS e de uma regra de roteamento próprios se for adicionado depois. O Compose não altera DNS, configurações do Cloudflare, certificados de outros domínios ou o proxy global.
-
-## Diagnóstico
+## Verificar
 
 ```bash
-cd /srv/stack/drdiegoaraujo
 docker compose -f compose.yaml ps
-curl -I http://127.0.0.1:8088/
-curl -I https://drdiegoaraujo.com/
+curl -sS http://127.0.0.1:8088/
+curl -sS https://drdiegoaraujo.com/
 docker compose -f compose.yaml logs --tail=50 noerion
 ```
 
-- Local `200` e domínio `404`: confira a versão do Compose e as labels/rede da rota no Traefik.
-- Domínio `502` ou `504`: confira a conexão do serviço e do Traefik à rede `proxy`, a saúde do container e a porta interna `80`.
-- Erro de certificado: confira o resolver `le`, a origem DNS e o modo SSL/TLS do Cloudflare.
+As duas respostas devem conter `<title>Dr. Diego de Araújo — Site em manutenção</title>`. Se apenas o domínio divergir, confira DNS, cache e roteamento do Traefik antes de declarar a manutenção publicada.
 
-As labels podem ser conferidas sem exibir variáveis de ambiente:
-
-```bash
-docker inspect drdiegoaraujo-noerion-1 --format 'rede={{index .Config.Labels "traefik.docker.network"}} entrada={{index .Config.Labels "traefik.http.routers.drdiegoaraujo.entrypoints"}} resolver={{index .Config.Labels "traefik.http.routers.drdiegoaraujo.tls.certresolver"}}'
-```
-
-A porta local pode ser alterada exportando `NOERION_PORT` antes do script. Isso não altera a porta interna `80` usada pelo Traefik.
-
-Referência: [configuração de roteamento Docker do Traefik](https://doc.traefik.io/traefik/reference/routing-configuration/other-providers/docker/).
+Não restaure o diretório servido para `dist/` nem publique a landing completa em outra rota ou hospedagem sem nova autorização humana explícita.

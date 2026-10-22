@@ -6,7 +6,7 @@ trap 'printf "ERRO: implantacao interrompida na linha %s.\n" "$LINENO" >&2' ERR
 REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 cd -- "$REPO_DIR"
 
-for command_name in git docker curl; do
+for command_name in git docker curl grep; do
     if ! command -v "$command_name" >/dev/null 2>&1; then
         printf 'ERRO: comando necessario nao encontrado: %s.\n' "$command_name" >&2
         exit 1
@@ -48,10 +48,21 @@ else
     printf 'AVISO: remoto origin ausente. Usando os arquivos locais versionados.\n'
 fi
 
-if [[ ! -f dist/index.html ]]; then
-    printf 'ERRO: dist/index.html nao foi encontrado. Verifique os arquivos do repositorio.\n' >&2
+maintenance_title='<title>Dr. Diego de Araújo — Site em manutenção</title>'
+if [[ ! -f maintenance/index.html ]] || ! grep -Fq -- "$maintenance_title" maintenance/index.html; then
+    printf 'ERRO: a pagina de manutencao obrigatoria nao foi encontrada ou seu titulo esta incorreto.\n' >&2
+    printf 'A landing completa deve permanecer fora do ar ate nova autorizacao humana explicita.\n' >&2
     exit 1
 fi
+
+is_maintenance_page() {
+    local response response_code
+    if ! response="$(curl --fail --silent --show-error --max-time 10 --write-out '\n%{http_code}' "$1")"; then
+        return 1
+    fi
+    response_code="${response##*$'\n'}"
+    [[ "$response_code" == 200 ]] && grep -Fq -- "$maintenance_title" <<< "$response"
+}
 
 # A mesma porta e repassada ao Compose e usada na verificacao local.
 # Para mudar a porta, exporte NOERION_PORT no shell antes de executar.
@@ -69,7 +80,7 @@ if ! docker network inspect proxy >/dev/null 2>&1; then
     exit 1
 fi
 
-printf 'Construindo e iniciando somente o projeto drdiegoaraujo...\n'
+printf 'Construindo e publicando somente a pagina de manutencao...\n'
 if docker compose up --help | grep -q -- '--wait'; then
     docker compose -f compose.yaml up -d --build --wait
 else
@@ -79,32 +90,32 @@ fi
 site_url="http://127.0.0.1:${NOERION_PORT}/"
 local_ready=0
 for attempt in {1..30}; do
-    if curl --fail --silent --show-error --max-time 5 "$site_url" >/dev/null 2>&1; then
+    if is_maintenance_page "$site_url"; then
         local_ready=1
-        printf 'Container saudavel em %s\n' "$site_url"
+        printf 'Manutencao confirmada com HTTP 200 em %s\n' "$site_url"
         break
     fi
     sleep 2
 done
 
 if [[ "$local_ready" -ne 1 ]]; then
-    printf 'ERRO: a landing page nao respondeu em %s.\n' "$site_url" >&2
+    printf 'ERRO: a pagina de manutencao com HTTP 200 nao foi confirmada em %s.\n' "$site_url" >&2
     docker compose -f compose.yaml ps
     docker compose -f compose.yaml logs --tail=50 noerion
     exit 1
 fi
 
 public_url='https://drdiegoaraujo.com/'
-printf 'Verificando a rota publica no Traefik...\n'
+printf 'Verificando a pagina de manutencao na rota publica do Traefik...\n'
 for attempt in {1..12}; do
-    if curl --fail --silent --max-time 10 "$public_url" \
-        | grep -F '<title>Dr. Diego de Araújo — NOÉRION Signature System</title>' >/dev/null; then
-        printf 'Implantacao concluida: %s\n' "$public_url"
+    if is_maintenance_page "$public_url"; then
+        printf 'Manutencao publicada e confirmada com HTTP 200: %s\n' "$public_url"
+        printf 'A landing completa permanece fora do ar ate nova autorizacao humana explicita.\n'
         exit 0
     fi
     sleep 2
 done
 
-printf 'ERRO: o container esta saudavel, mas a landing page ainda nao foi confirmada em %s.\n' "$public_url" >&2
+printf 'ERRO: a manutencao foi confirmada localmente, mas ainda nao foi confirmada em %s.\n' "$public_url" >&2
 printf 'Confira o DNS de origem no Cloudflare e a rota drdiegoaraujo no Traefik (rede proxy, entrada websecure, resolver le).\n' >&2
 exit 1
