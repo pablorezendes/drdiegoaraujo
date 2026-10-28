@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F6F2EA">
+  <title>Solicitar uma conversa · NOÉRION</title>
+  <meta name="description" content="Solicite uma conversa com o Dr. Diego de Araújo sobre o NOÉRION.">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <link rel="canonical" href="https://drdiegoaraujo.com/conversa">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:title" content="Solicitar uma conversa · NOÉRION">
+  <meta property="og:description" content="Solicite uma conversa com o Dr. Diego de Araújo sobre o NOÉRION.">
+  <meta property="og:url" content="https://drdiegoaraujo.com/conversa">
+  <meta property="og:image" content="https://drdiegoaraujo.com/img/og-image.png">
+  <meta property="og:image:alt" content="NOÉRION · Dr. Diego de Araújo">
+  <link rel="icon" href="img/emblema.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&amp;family=Hanken+Grotesk:wght@400;500;600&amp;display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <script src="site-config.js" defer></script>
+  <script src="app.js" defer></script>
+  <script src="conversa.js" defer></script>
+  <script src="/analytics.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/#topo" aria-label="Dr. Diego de Araújo — início">
+        <img class="brand-emblem" src="img/emblema.svg" width="40" height="40" alt="">
+        <span class="brand-type"><span class="brand-name">Dr. Diego de Araújo</span><small class="brand-detail">NOÉRION</small></span>
+      </a>
+      <nav class="desktop-nav" aria-label="Seções da página">
+        <a href="/#percurso">O percurso</a>
+        <a href="/#quem">Quem conduz</a>
+        <a href="/#perguntas">Perguntas</a>
+        <a class="button button-secondary" href="/conversa">Solicitar uma conversa</a>
+      </nav>
+    </div>
+  </header>
+  <main class="page-main narrow" id="conteudo">
+    <a class="page-back" href="/">Voltar à página</a>
+    <div class="page-intro">
+      <p class="eyebrow">NOÉRION</p>
+      <h1 class="page-title">Solicitar uma conversa</h1>
+      <p class="page-lead">Duas etapas, menos de um minuto. Não é necessário compartilhar informações de saúde.</p>
+    </div>
+    <div class="form-notice" id="contact-state" role="status">O envio ainda não está disponível. Os canais profissionais serão informados após confirmação.</div>
+    <div class="contact-links" data-contact-group hidden>
+      <a data-contact="whatsapp" hidden>Conversar pelo WhatsApp</a>
+      <a data-contact="email" hidden>Enviar um e-mail</a>
+    </div>
+    <noscript><p class="form-notice">Ative o JavaScript para percorrer as duas etapas. O formulário não envia dados sem essa funcionalidade.</p></noscript>
+    <p class="form-progress" id="etapa" aria-live="polite">Etapa <span id="etapa-n">1</span> de 2</p>
+    <form class="conversation-form" id="conversation-form" action="/api/conversa" method="post" novalidate>
+      <fieldset class="form-step" id="passo1" aria-label="Etapa 1 de 2">
+        <legend class="sr-only">Etapa 1 de 2</legend>
+        <fieldset class="field-group">
+          <legend>Para quem é o acompanhamento?</legend>
+          <div class="option-group">
+              <label class="option-label"><input type="radio" name="para" value="mim" required><span>Para mim</span></label>
+              <label class="option-label"><input type="radio" name="para" value="proximo"><span>Para alguém próximo</span></label>
+              <label class="option-label"><input type="radio" name="para" value="presente"><span>Para presentear</span></label>
+            </div>
+        </fieldset>
+        <fieldset class="field-group">
+          <legend>O que mais atrai você neste trabalho?</legend>
+          <div class="option-group">
+              <label class="option-label"><input type="radio" name="interesse" value="corpo" required><span>O cuidado com o corpo</span></label>
+              <label class="option-label"><input type="radio" name="interesse" value="mente"><span>A mente e os padrões</span></label>
+              <label class="option-label"><input type="radio" name="interesse" value="espiritual"><span>A dimensão espiritual</span></label>
+              <label class="option-label"><input type="radio" name="interesse" value="inteiro"><span>O percurso inteiro</span></label>
+            </div>
+        </fieldset>
+        <fieldset class="field-group">
+          <legend>Como conheceu o trabalho?</legend>
+          <div class="option-group">
+              <label class="option-label"><input type="radio" name="origem" value="indicacao" required><span>Por indicação</span></label>
+              <label class="option-label"><input type="radio" name="origem" value="outro"><span>Outro</span></label>
+            </div>
+          <label class="field-label" for="indicacao"><span>Quem indicou? (opcional)</span><input id="indicacao" type="text" name="indicacao" maxlength="120" autocomplete="off"></label>
+        </fieldset>
+        <label class="field-label" for="cidade"><span>Em que cidade seriam os encontros?</span><input id="cidade" type="text" name="cidade" required maxlength="120" autocomplete="address-level2" placeholder="Cidade / UF"></label>
+        <fieldset class="field-group">
+          <legend>Os honorários são definidos em um plano escrito para você e refletem um acompanhamento pessoal, para no máximo oito pessoas por vez. Faz sentido seguir?</legend>
+          <div class="option-group">
+              <label class="option-label"><input type="radio" name="valor" value="sim" required><span>Sim, quero conversar</span></label>
+              <label class="option-label"><input type="radio" name="valor" value="entender"><span>Quero entender melhor antes</span></label>
+            </div>
+        </fieldset>
+        <div class="form-actions"><button class="button button-primary" id="continuar" type="button">Continuar</button></div>
+      </fieldset>
+      <fieldset class="form-step" id="passo2" aria-label="Etapa 2 de 2" hidden>
+        <legend class="sr-only">Etapa 2 de 2</legend>
+        <div class="honeypot" aria-hidden="true"><label for="site">Não preencha</label><input id="site" type="text" name="site" tabindex="-1" autocomplete="off" maxlength="200"></div>
+        <div class="field-grid">
+          <label class="field-label" for="nome"><span>Nome</span><input id="nome" type="text" name="nome" required maxlength="160" autocomplete="name"></label>
+          <label class="field-label" for="email"><span>E-mail</span><input id="email" type="email" name="email" required maxlength="254" autocomplete="email"></label>
+          <label class="field-label" for="whatsapp"><span>WhatsApp</span><input id="whatsapp" type="tel" name="whatsapp" required maxlength="24" autocomplete="tel" inputmode="tel" aria-describedby="whatsapp-help"><small id="whatsapp-help">Inclua o DDD.</small></label>
+          <label class="field-label" for="horario"><span>Melhor horário para a conversa</span><select id="horario" name="horario"><option value="manha">Manhã</option><option value="tarde">Tarde</option><option value="noite">Noite</option></select></label>
+        </div>
+        <div class="consent-group">
+          <label class="consent-label"><input type="checkbox" name="privacidade" required><span>Li a <a href="/privacidade" target="_blank" rel="noopener">Política de Privacidade</a>.</span></label>
+          <label class="consent-label"><input type="checkbox" name="comunicacoes"><span>Quero receber comunicações do NOÉRION (opcional).</span></label>
+        </div>
+        <div class="form-actions">
+          <button class="button button-secondary" id="voltar" type="button">Voltar</button>
+          <button class="button button-primary" id="enviar" type="submit" aria-describedby="contact-state form-error" disabled>Enviar solicitação</button>
+        </div>
+      </fieldset>
+      <p class="form-message" id="form-error" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></p>
+    </form>
+    <section class="received-panel" id="recebido" aria-labelledby="received-title" tabindex="-1" hidden>
+      <h2 id="received-title">Recebido.</h2>
+      <p>Retornamos em até 2 dias úteis para marcar uma conversa. O envio não garante vaga.</p>
+      <div class="form-actions"><a href="/">Voltar à página</a><button class="button button-secondary" id="de-novo" type="button">Ver o formulário de novo</button></div>
+    </section>
+    <p class="form-notice">Seus dados servem só para este contato.</p>
+  </main>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <p class="footer-name">Dr. Diego de Araújo</p>
+        <p>Fisioterapeuta · <span data-registration>CREFITO-11/362668-F</span> · inscrição secundária no <span data-secondary-registration>CREFITO-3</span></p>
+        <p class="footer-care">As práticas contemplativas e simbólicas são opcionais e não substituem cuidados de saúde.</p>
+      </div>
+      <nav class="footer-links" aria-label="Rodapé">
+        <a href="/privacidade">Privacidade</a>
+        <a href="/termos">Termos</a>
+        <a data-contact="whatsapp" hidden>WhatsApp</a>
+        <a data-contact="email" hidden>E-mail</a>
+      </nav>
+    </div>
+    <p class="footer-copy">© <span data-year>2026</span> NOÉRION</p>
+  </footer>
+</body>
+</html>

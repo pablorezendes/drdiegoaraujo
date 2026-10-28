@@ -2,5 +2,5 @@
 !Dockerfile
 !infra/
 !infra/nginx.conf
-!maintenance/
-!maintenance/**
+!dist/
+!dist/**
