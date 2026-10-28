@@ -11,7 +11,7 @@ Fonte: `instruções para atualização/NOERION_SITE_V15/00_LEIA_PRIMEIRO.txt`, 
 | Sequência de conteúdo definida no guia | Topo → formato/manifesto → percurso → funcionamento → práticas → experiência/honorários → quem conduz → 12 perguntas → ingresso → rodapé |
 | Cinco movimentos em português | Origem, Corpo, Mente, Consciência e Integração; TAA como Terapia de Autoabsorção |
 | Uma chamada principal | “Solicitar uma conversa”, com destino `/conversa` |
-| Tratamento das fotos | Três referências originais em WebP/JPG; tamanhos explícitos; hero prioritário; demais lazy; legenda de referência IA e alt coerente com a imagem |
+| Tratamento das fotos | Três referências originais em WebP/JPG; tamanhos explícitos; hero prioritário; demais lazy; alt coerente com a imagem. Legendas visíveis removidas por solicitação explícita do usuário |
 | Responsividade | Conteúdo até 1180px; margens 32/20px; seções 120–136/88px; listas e FAQ com uma coluna até 640px; cabeçalho móvel somente com marca |
 | Acessibilidade | Conteúdo sem depender de JS; skip link; regiões e títulos; foco visível; alvos de 44px; labels e fieldsets; feedback de erro; respeito a movimento reduzido |
 | Formulário em duas etapas | Avanço e retorno preservam respostas, validação cliente/servidor, privacidade obrigatória e comunicações opcionais desmarcadas |
